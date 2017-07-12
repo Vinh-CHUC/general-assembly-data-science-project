@@ -45,9 +45,10 @@ def compute_games_played_and_won__fast(df, players_names):
     efficiency
     Keeping both versions around to double check that they are the same...
     """
+    df_copy = df.copy()
     players_names == np.sort(np.array(players_names)).reshape(1, -1)
-    P1_Name = df.P1_Name.values.reshape(-1, 1)
-    P2_Name = df.P2_Name.values.reshape(-1, 1)
+    P1_Name = df_copy.P1_Name.values.reshape(-1, 1)
+    P2_Name = df_copy.P2_Name.values.reshape(-1, 1)
 
     # We're relying on broadcasting here
     players_played = (players_names == P1_Name) | (players_names == P2_Name)
@@ -59,8 +60,8 @@ def compute_games_played_and_won__fast(df, players_names):
     C   D   
     """
     players_won = (
-        ((players_names == P1_Name) & (df.Player1Wins.values.reshape(-1, 1))) |
-        ((players_names == P2_Name) & (~df.Player1Wins.values.reshape(-1, 1)))
+        ((players_names == P1_Name) & (df_copy.Player1Wins.values.reshape(-1, 1))) |
+        ((players_names == P2_Name) & (~df_copy.Player1Wins.values.reshape(-1, 1)))
     )
 
     # Interleaving the columns
@@ -71,7 +72,7 @@ def compute_games_played_and_won__fast(df, players_names):
 
     # Assigning the numpy array to the dataframe and returning it
     cols = pd.MultiIndex.from_product([players_names, ["Played", "Won"]], names=["Player", "Stat"])
-    new_df = pd.DataFrame(index=df.index, columns=cols)
+    new_df = pd.DataFrame(index=df_copy.index, columns=cols)
     new_df.sort_index(axis=1, inplace=True)
     new_df.loc[:,:] = played_and_won.astype(int)
 
@@ -108,12 +109,15 @@ def compute_win_round_type__fast(df, rounds, players_names):
     """
     Same as above but implemented in pure Numpy for more performance
     """
+    df_copy = df.copy()
+
+    players_names == np.sort(np.array(players_names)).reshape(1, -1)
     round_counts = rounds.value_counts()
     # Filtering out odd values like "0th Round"
     round_types = sorted([round_t for round_t, round_c in round_counts.iteritems() if round_c > 10])
 
     # The "Won" columns are the odd columns
-    players_won = df.values[:, 1::2]
+    players_won = df_copy.values[:, 1::2].astype(bool)
 
     # List of matrixes for winning a specific round
     players_won_rounds = []
@@ -133,8 +137,8 @@ def compute_win_round_type__fast(df, rounds, players_names):
     cols = pd.MultiIndex.from_product(
             [players_names, ["Won_" + rt for rt in round_types]],
     names=["Player", "Stat"])
-    new_df = pd.DataFrame(index=df.index, columns=cols)
+    new_df = pd.DataFrame(index=df_copy.index, columns=cols)
     new_df.sort_index(axis=1, inplace=True)
     new_df.loc[:,:] = won_rounds.astype(int)
 
-    return pd.concat([new_df, df], axis=1).sort_index(axis=1)
+    return pd.concat([new_df, df_copy], axis=1).sort_index(axis=1)
