@@ -72,9 +72,7 @@ def compute_games_played_and_won__fast(df, players_names):
 
     # Assigning the numpy array to the dataframe and returning it
     cols = pd.MultiIndex.from_product([players_names, ["Played", "Won"]], names=["Player", "Stat"])
-    new_df = pd.DataFrame(index=df_copy.index, columns=cols)
-    new_df.sort_index(axis=1, inplace=True)
-    new_df.loc[:,:] = played_and_won.astype(int)
+    new_df = pd.DataFrame(data=played_and_won.astype(int), index=df_copy.index, columns=cols)
 
     return new_df
 
@@ -109,7 +107,7 @@ def compute_win_round_type__fast(df, rounds, players_names):
     """
     Same as above but implemented in pure Numpy for more performance
     """
-    df_copy = df.copy()
+    df_copy = df.sort_index(axis=1)
 
     players_names == np.sort(np.array(players_names)).reshape(1, -1)
     round_counts = rounds.value_counts()
@@ -136,9 +134,7 @@ def compute_win_round_type__fast(df, rounds, players_names):
     # Assigning the numpy array to a new dataframe and returning it
     cols = pd.MultiIndex.from_product(
             [players_names, ["Won_" + rt for rt in round_types]],
-    names=["Player", "Stat"])
-    new_df = pd.DataFrame(index=df_copy.index, columns=cols)
-    new_df.sort_index(axis=1, inplace=True)
-    new_df.loc[:,:] = won_rounds.astype(int)
+    names=["Player", "Stat"])  # Important players and rounds are already sorted here
+    new_df = pd.DataFrame(data=won_rounds.astype(int), index=df_copy.index, columns=cols)
 
-    return pd.concat([new_df, df_copy], axis=1).sort_index(axis=1)
+    return pd.concat([new_df, df_copy], axis=1, copy=False).sort_index(axis=1)
