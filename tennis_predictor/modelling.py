@@ -15,3 +15,8 @@ def format_feature_coefs(feature_names, coefs):
     })
 
     return feature_and_coef.set_index("Feature")
+
+
+def sort_feature_coefs_by_bas(feature_coefs_df):
+    abs_order = feature_coefs_df.Coef.abs().sort_values(ascending=False)
+    return feature_coefs_df.copy().loc[abs_order.index]
